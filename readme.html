@@ -1,0 +1,237 @@
+<HTML>
+<BODY>
+
+<TABLE CELLSPACING="2" CELLPADDING="0" BORDER="0">
+<TR>
+	<TD VALIGN="TOP">
+	</TD>
+</TR>
+</TABLE>
+
+
+<a name="intro"><B>Introduction</b></a>
+<p>QuBit is a library to support Quantum Superpositions in C++. This allows each <i>CQuBit</i> variable to hold a number of
+different values <i>at the same time</i>. Normal mathematical operations can be performed on a QuBit, but they affect every value
+in the QuBit, <i>at the same time</i>. Binary Operations on two QuBits cause a result based on <i>every</i> possible outcome.
+For example, </p>
+<TABLE CELLSPACING="2" CELLPADDING="2" BORDER="1">
+<TR><TD>a = { 1, 2, 3 };</TD><TD>b = a + 10;</TD><TD>b = { 11, 12, 13 };</TD></TR>
+<TR><TD>a = { 2, 4, 6 }; b = { 10 ,100 ,1000 };</TD><TD>c = a * b;</TD><TD>c = { 20, 40, 60, 200, 400, 600, 2000, 4000, 6000 };</TD></TR>
+</TABLE>
+<i>This is pseudo-code for demonstrative purposes only! The C++ comes later!</i>
+<p>Each value can only exist in a QuBit once. There is no 'weighting' applied if a value is added several times.</p>
+<p>Comparisons with a QuBit also occur with all the values <i>at the same time</i>. This means a search is simply,</p>
+<TT>
+qb = (1,2,3,4,5);<BR>
+if qb eq 5  print "There's a '5' in the QuBit, somewhere!"<BR>
+</TT>
+
+<BR><HR WIDTH="50%"><BR>
+
+<b><a name="quantum">Quantum Stuff</a></b>
+<p>The above examples demonstrate the basic functionality of QuBit. It's not significantly more complex than 'sets'. However,
+there are a few functions that take the extra step into 'gaga' land!</p>
+<p>A QuBit can be in three possible states:</p>
+<UL>
+	<LI>Disjunctive</LI>
+	<LI>Conjunctive</LI>
+	<LI>Collapsed</LI>
+</UL>
+<p><U>Disjunctive</U><BR>
+All states are considered when performing arithmetic (at the same time, remember!), but
+this not necessarily true of comparisons. A disjunctive QuBit will consider that if <i>any</i> of 
+the individual comparisons evaluate to 'true', the whole expression will evaluate to 'true'. In psuedo-code:</p>
+if any{10,15,20,25} < 20 then print "At least one of these numbers is lower than 20"<BR>
+
+<p><U>Conjunctive</U><BR>
+Here, a comparison will evaluate to 'true' if <i>all</i> it's individual values evaluate to 'true'.
+In psuedo-code:</p>
+if all{10,15,20,25} < 20 then print "All of these numbers are lower than 20"<BR>
+
+<p><U>Collapsed</U><BR>
+This occurs ofter a comparison has been made. The QuBit has exhausted all it's superpositions to produce the
+result, and is consequently empty. It does, however, contain a 'true' or 'false' value, dependent on the result. 
+(You'll see how this boolean result is obtained later)</p>
+
+<p><U>Eigenstates</U><BR>
+A collapsed quantum state is useful - but not that useful! It might be useful to know that there is
+(at least) one number less than 20 in a particular case, but it would be <i>more</i> useful to know
+<i>which</i> numbers are less than 20. To find this information, we use the eigenstates of the QuBit. Pseudo-code, anyone?</p>
+v = any{10,15,20,25} < 20<BR>
+if v then print "Those numbers less than 20 are " eigenstates(v)<BR>
+
+<BR><HR WIDTH="50%"><BR>
+
+<B><a name="cqubit">Declaring and Using a QuBit</a></b>
+<p>We now turn to the actual C++ code require to perform these Quantum miracles! QuBit is, itself, a template and is
+therefore created with:</P>
+<TT>CQuBit&lt;float&gt; q;</TT><BR>
+<p>This declares a Quantum superposition called 'q', consisting of floating point numbers. To add or remove values to this
+variable, you may use the following functions:</p>
+<TT>
+&nbsp;q.Add(10);	// Add '10'<BR>
+&nbsp;q.Add(2);	// Add '2'<BR>
+&nbsp;q.AddRange(100,200);	// Add every number from '100' to '200', inclusive<BR>
+&nbsp;q.AddRange(10,11,0.1f);	// Add every number from '10' to '11' in steps of '0.1'<BR>
+&nbsp;q.Remove(10.5f);		// Remove the number '10.5'<BR><BR>
+</TT>
+You can also construct a QuBit, using the ranged constructor,<BR>
+<TT>CQuBit&lt;float&gt; q(100,200);	// exactly the same as example three above</TT><BR>
+<p>Use of QuBit is the same as any other variable. Since all (<a href="#probs">see note below</a>) operators are overloaded
+you can write natural looking code, such as 'a+b', or 'a/=2'. You can use binary operations (such as additional or multiplication)
+with either one CQuBit and one float, or two CQuBits, as you see fit. Note <a href="#probs">restrictions</a>.</p>
+
+<BR><HR WIDTH="50%"><BR>
+
+<B><a name="qfn">Quantum-Orientated Member Functions</a></b>
+<p>
+Having created a quantum superposition (with either <TT>Add</TT> or <TT>AddRange</TT>), it is now time to use it. Looking at
+the examples above, we can find if any value is less than 20 with this code.</p>
+<TT>
+CQuBit&lt;float&gt; q(10,25,5);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;ans = q.Any() < 20;<BR>
+&nbsp;if (ans.GetBoolResult()) cout << "At least one of these numbers is lower than 20";<BR>
+</TT>
+<p>The QuBit can also be treated as a disjunctive with the code <TT>q.Any();</TT>, allowing you to re-write the above thus:</p>
+<TT>
+CQuBit&lt;float&gt; q(10,25,5);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;q.Any();<BR>
+&nbsp;ans = q < 20;<BR>
+&nbsp;if (ans.GetBoolResult()) cout << "At least one of these numbers is lower than 20";<BR>
+</TT>
+<p>Although the results of the comparison (i.e. q < 20) is boolean, the C++ version of the library
+forces the result type to be a CQuBit. You then determine whether it collapsed to 'true' or 'false' with the
+'GetBoolResult()' member function. This is to allow retrieval of the eigenstates (if only a bool were returned
+this information would get lost). Using eigenstatees to find those values less than 20, one can use:<p>
+<TT>
+CQuBit&lt;float&gt; q(10,25,5);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;q.Any();<BR>
+&nbsp;ans = q < 20;<BR>
+&nbsp;if (ans.GetBoolResult()) cout << "These numbers are lower than 20: " << ans.Eigenstates();<BR>
+</TT>
+<p>The <TT>Eigenstates</TT> function returns a QuBit itself, so could be applied to further calculations.</p>
+<p><i>Note:</i>Eigenstates could have been implemented in a similar fashion to PERL, with a cache storing
+the result of the last comparison operation. However, as it didn't feel very
+'C' to be using global variables in this manner, so I adopted a QuBit return type, and 'GetBoolResult' to 
+retrieve the comparisons' result. (Technically speaking this might also be considered storing a global!)</p>
+<p><TT>All</TT> is used in exactly the same manner as above. Only the results differ (obviously!).</p>
+<TT>
+CQuBit&lt;float&gt; q(10,25,5);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;q.All();<BR>
+&nbsp;ans = q < 20;<BR>
+&nbsp;if (ans.GetBoolResult()) cout << "All of these numbers are lower than 20: ";<BR>
+</TT>
+
+<BR>
+<u>Streams</u>
+<p>The output stream produces space delimitted list of the states, enclosed in braces. </p>
+<TT>
+CQuBit&lt;float&gt; q;<BR>
+&nbsp;q.AddRange(15,20);<BR>
+&nbsp;cout << q;<BR>
+</TT>
+<i>produces</i>
+{ 15 16 17 18 19 20 }<BR>
+<p>The input stream, will read this format into the QuBit, and leave the stream pointer immediately
+after the closing brace.</p>
+
+<BR><HR WIDTH="50%"><BR>
+
+<p><B><a name="setfn">Set-Orientated Member Functions</a></b><BR>
+The <TT>Any</TT> and <TT>All</TT> methods have another function: set manipulation. Recall that QuBits
+is basically an implementation of set handling. Also recall, that <TT>Any</TT> is disjunctive. So,
+if <i>any</i> of {1,2,3} is combined with <i>any</i> of {4,5,6}, the result is a union; {1,2,3,4,5,6}. 
+Written in code, this would be:</p>
+<TT>
+CQuBit&lt;float&gt; q1(1,3);<BR>
+CQuBit&lt;float&gt; q2(4,6);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;ans.Any(q1, q2);&nbsp;// The result is {1,2,3,4,5,6}<BR>
+</TT> 
+<p><i>Note:</i> QuBit ignores the type of original quantum states. So in this case, <TT>q1</TT> and <TT>q2</TT>
+could be conjunctive or disjunctive, the answer would be identical in both cases. All collapsed QuBits are
+ignored</p>
+<p>Well, <TT>Any</TT> is union, it should be obvious what <TT>All</TT> (the conjunctive state) should be! One
+brownie point to everyone who said 'intersection'. The resultant QuBit features only those values present in
+<i>both</i> of the original superpositions.</p>
+<TT>
+CQuBit&lt;float&gt; q1(1,6);<BR>
+CQuBit&lt;float&gt; q2(4,5);<BR>
+CQuBit&lt;float&gt; ans;<BR>
+<BR>
+&nbsp;ans.All(q1, q2);&nbsp;// The result is {4,5}<BR>
+</TT> 
+
+<BR><HR WIDTH="50%"><BR>
+
+<p><B><a name="sample">Sample Code</a></b><BR>
+Here are a number of small examples (all available for download in the <a href="/pub/sources/qubit/qubit.zip">zip</a> file below).
+I have given the PERL code also, to show linage, as well as to provide a parallel for those familar with
+the language, or the Quantum::Superpositions library available.</p>
+<TABLE CELLSPACING="2" CELLPADDING="0" BORDER="1">
+<TR BGCOLOR="#ddddda"><TD>Function</TD><TD>PERL</TD><TD>C++ (using QuBit)</TD></TR>
+<TR><TD>min</TD><TD><TT>eigenstates(any(@_) <= all(@_))</TT></TD><TD><TT>(ql.Any() &lt;= ql.All()).Eigenstates()</TT></TD></TR>
+<TR><TD>max</TD><TD><TT>eigenstates(any(@_) >= all(@_))</TT></TD><TD><TT>(ql.Any() &gt;= ql.All()).Eigenstates()</TT></TD></TR>
+<TR><TD>IsPrime</TD><TD><TT>$_[0]==2 || $_[0] % all(2..sqrt($_[0])+1) != 0</TT></TD><TD>
+	<TT>
+	if (i==2)	return true;<BR>
+	prime.AddRange(2, sqrt(i)+1);<BR>
+	ans = (i % prime.All()) != 0;<BR>
+	return ans.GetBoolResult();</TT><BR>
+</TD></TR>
+<TR><TD>factor</TD><TD><TT>$q = $n / any(2..$n-1); <BR>eigenstates(floor($q)==$q);</TT></TD><TD><TT>CQuBit&lt;float&gt; n, q;</TT><BR>
+	<BR><TT>
+	n.AddRange(2, i-1);<BR>
+	q = i/n.Any();<BR>
+	q = q.Floor()==q;<BR>
+	return q.Eigenstates();</TT><BR>
+</TD></TR>
+<TR><TD></TD><TD></TD></TR>
+<TR><TD></TD><TD></TD></TR>
+</TABLE>
+
+<BR><HR WIDTH="50%"><BR>
+
+<a name="probs"><B>Limitions</b>
+<p>QuBits are only concerned with values. Therefore, the return value from post and pre decrement operators are identical. i.e.
+<i>a++</i> and <i>++a</i>, are the same as <i>a++</i>. This <b>doesn't</b> mean that <i>a++</i> and <i>++a</i>
+are different, just that the return type from <i>a++</i> is a value (as it should be), but <i>++a</i> is <b>not</b>
+a reference to the <i>a</i> variable, as you might expect.</p>
+<TABLE CELLSPACING="2" CELLPADDING="0" BORDER="1">
+<TR><TD>a = {1,2,3}</TD><TD>b = a++;</TD><TD>a = {2,3,4}; b = {1,2,3};</TD></TR>
+<TR><TD>a = {1,2,3}</TD><TD>b = ++a;</TD><TD>a = {2,3,4}; b = {2,3,4};</TD></TR>
+</TABLE>
+<p>Some compilers (noticable Microsoft's!) refuse to compile this code as is. To help those poor
+unfortunates, I've removed a couple of the friend functions with an <i>#if 0</i>. Namely,</p>
+<UL>
+<LI>friend  CQuBit<_T> operator+(const _T &a, const CQuBit<_T> &b)</LI>
+<LI>friend  CQuBit<_T> operator*(const _T &a, const CQuBit<_T> &b)</LI>
+<LI>friend  CQuBit<_T> operator-(const _T &a, const CQuBit<_T> &b)</LI>
+</UL>
+<p>These prevent compilation of code such as, <i>q2 = 5 * q1</i>. This means you'll have to re-write your code by swapping 
+the arguments over, or by creating a QuBit containing one entry. The code works, however.
+</p>
+<p>The set of operators catered for are:</p>
+<TABLE CELLSPACING="2" CELLPADDING="2" BORDER="1">
+<TR><TD>!</TD><TD>~</TD><TD>-</TD><TD>%</TD><TD>%=</TD><TD>&</TD><TD>&=</TD><TD>&&</TD><TD>&nbsp;</TD></TR>
+<TR><TD>*</TD><TD>*=</TD><TD>+</TD><TD>+=</TD><TD>-</TD><TD>-=</TD><TD>/</TD><TD>/=</TD><TD>&lt;&lt;</TD></TR>
+<TR><TD>&lt;&lt;=</TD><TD>&gt;&gt;</TD><TD>&gt;&gt;=</TD><TD>=</TD><TD>^</TD><TD>^=</TD><TD>|</TD><TD>|=</TD><TD>||</TD></TR>
+<TR><TD>++ (pre and post)</TD><TD>-- (pre and post)</TD><TD>&lt;</TD><TD>&lt;=</TD><TD>&gt;</TD><TD>&gt;=</TD><TD>==</TD><TD>!=</TD><TD>&nbsp;</TD></TR>
+
+</TABLE>
+Notes:
+&gt;&gt; &amp; &lt;&lt; are also handled for streams.<BR>
+[] is overloaded to retrieve individual state values, i.e. if a={10,20,30}, then a[0]=10, a[1]=20 and a[2]=30.<BR>
+
+</BODY>
+</HTML>
+
